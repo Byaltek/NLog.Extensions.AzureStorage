@@ -1,10 +1,9 @@
 ﻿using System;
-using Microsoft.WindowsAzure.Storage.Table;
-using NLog.Layouts;
+using Microsoft.Azure.Cosmos.Table;
 
-namespace NLog.Extensions.AzureStorage
+namespace NLog.Extensions.AzureCosmos.Table
 {
-    public class NLogEntity: TableEntity
+    public class NLogEntity : TableEntity
     {
         public string LogTimeStamp { get; set; }
         public string Level { get; set; }
@@ -24,7 +23,7 @@ namespace NLog.Extensions.AzureStorage
             Message = logEvent.Message;
             LogTimeStamp = logEvent.TimeStamp.ToString(logTimeStampFormat);
             MachineName = machineName;
-            if(logEvent.Exception != null)
+            if (logEvent.Exception != null)
             {
                 var exception = logEvent.Exception;
                 var innerException = exception.InnerException;
@@ -52,6 +51,5 @@ namespace NLog.Extensions.AzureStorage
             RowKey = string.Concat((DateTime.MaxValue.Ticks - DateTime.UtcNow.Ticks).ToString("d19"), "__", Guid.NewGuid().ToString());
             PartitionKey = partitionKey;
         }
-        public NLogEntity() { }
     }
 }

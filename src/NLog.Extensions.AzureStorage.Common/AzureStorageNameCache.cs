@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace NLog.Extensions.AzureStorage
+namespace NLog.Extensions.AzureStorage.Common
 {
-    internal sealed class AzureStorageNameCache
+    public sealed class AzureStorageNameCache
     {
         private readonly Dictionary<string, string> _storageNameCache = new Dictionary<string, string>();
 
@@ -28,9 +28,9 @@ namespace NLog.Extensions.AzureStorage
                 if (char.IsWhiteSpace(name[0]) || char.IsWhiteSpace(name[name.Length - 1]))
                     name = name.Trim();
 
-                for (int i = 0; i < name.Length; ++i)
+                for (var i = 0; i < name.Length; ++i)
                 {
-                    char chr = name[i];
+                    var chr = name[i];
                     if (chr >= 'A' && chr <= 'Z')
                     {
                         if (ensureToLower)
@@ -72,26 +72,26 @@ namespace NLog.Extensions.AzureStorage
                 return simpleValidName;
 
             requestedContainerName = requestedContainerName?.Trim() ?? string.Empty;
-            const string validContainerPattern = "^[a-z0-9](?!.*--)[a-z0-9-]{1,61}[a-z0-9]$";
+            const string ValidContainerPattern = "^[a-z0-9](?!.*--)[a-z0-9-]{1,61}[a-z0-9]$";
             var loweredRequestedContainerName = requestedContainerName.ToLower();
-            if (Regex.Match(loweredRequestedContainerName, validContainerPattern).Success)
+            if (Regex.Match(loweredRequestedContainerName, ValidContainerPattern).Success)
             {
                 //valid name okay to lower and use
                 return loweredRequestedContainerName;
             }
 
-            const string trimLeadingPattern = "^.*?(?=[a-zA-Z0-9])";
-            const string trimTrailingPattern = "(?<=[a-zA-Z0-9]).*?";
-            const string trimFobiddenCharactersPattern = "[^a-zA-Z0-9-]";
-            const string trimExtraHyphensPattern = "-+";
+            const string TrimLeadingPattern = "^.*?(?=[a-zA-Z0-9])";
+            const string TrimTrailingPattern = "(?<=[a-zA-Z0-9]).*?";
+            const string TrimForbiddenCharactersPattern = "[^a-zA-Z0-9-]";
+            const string TrimExtraHyphensPattern = "-+";
 
             requestedContainerName = requestedContainerName.Replace('.', '-').Replace('_', '-').Replace('\\', '-').Replace('/', '-').Replace(' ', '-').Trim(new[] { '-' });
-            var pass1 = Regex.Replace(requestedContainerName, trimFobiddenCharactersPattern, String.Empty, RegexOptions.None);
-            var pass2 = Regex.Replace(pass1, trimTrailingPattern, String.Empty, RegexOptions.RightToLeft);
-            var pass3 = Regex.Replace(pass2, trimLeadingPattern, String.Empty, RegexOptions.None);
-            var pass4 = Regex.Replace(pass3, trimExtraHyphensPattern, "-", RegexOptions.None);
+            var pass1 = Regex.Replace(requestedContainerName, TrimForbiddenCharactersPattern, string.Empty, RegexOptions.None);
+            var pass2 = Regex.Replace(pass1, TrimTrailingPattern, string.Empty, RegexOptions.RightToLeft);
+            var pass3 = Regex.Replace(pass2, TrimLeadingPattern, string.Empty, RegexOptions.None);
+            var pass4 = Regex.Replace(pass3, TrimExtraHyphensPattern, "-", RegexOptions.None);
             var loweredCleanedContainerName = pass4.ToLower();
-            if (Regex.Match(loweredCleanedContainerName, validContainerPattern).Success)
+            if (Regex.Match(loweredCleanedContainerName, ValidContainerPattern).Success)
             {
                 return loweredCleanedContainerName;
             }
@@ -119,12 +119,12 @@ namespace NLog.Extensions.AzureStorage
             if (simpleValidName?.Length >= 3)
                 return simpleValidName;
 
-            const string trimLeadingPattern = "^.*?(?=[a-zA-Z])";
-            const string trimFobiddenCharactersPattern = "[^a-zA-Z0-9-]";
+            const string TrimLeadingPattern = "^.*?(?=[a-zA-Z])";
+            const string TrimForbiddenCharactersPattern = "[^a-zA-Z0-9-]";
 
-            var pass1 = Regex.Replace(tableName, trimFobiddenCharactersPattern, String.Empty, RegexOptions.None);
-            var cleanedTableName = Regex.Replace(pass1, trimLeadingPattern, String.Empty, RegexOptions.None);
-            if (String.IsNullOrWhiteSpace(cleanedTableName) || cleanedTableName.Length > 63 || cleanedTableName.Length < 3)
+            var pass1 = Regex.Replace(tableName, TrimForbiddenCharactersPattern, string.Empty, RegexOptions.None);
+            var cleanedTableName = Regex.Replace(pass1, TrimLeadingPattern, string.Empty, RegexOptions.None);
+            if (string.IsNullOrWhiteSpace(cleanedTableName) || cleanedTableName.Length > 63 || cleanedTableName.Length < 3)
             {
                 var tableDefault = "Logs";
                 return tableDefault;

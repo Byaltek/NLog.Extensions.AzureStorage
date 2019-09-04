@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Table;
+using Microsoft.Azure.Cosmos.Table;
 using NLog.Common;
 using NLog.Config;
+using NLog.Extensions.AzureStorage.Common;
 using NLog.Layouts;
 using NLog.Targets;
 
-namespace NLog.Extensions.AzureStorage
+namespace NLog.Extensions.AzureCosmos.Table
 {
     /// <summary>
     /// Azure Table Storage NLog Target
@@ -24,7 +24,8 @@ namespace NLog.Extensions.AzureStorage
 
         //Delegates for bucket sorting
         private SortHelpers.KeySelector<AsyncLogEventInfo, TablePartitionKey> _getTablePartitionNameDelegate;
-        struct TablePartitionKey : IEquatable<TablePartitionKey>
+
+        private struct TablePartitionKey : IEquatable<TablePartitionKey>
         {
             public readonly string TableName;
             public readonly string PartitionId;
@@ -83,7 +84,7 @@ namespace NLog.Extensions.AzureStorage
 
             _machineName = GetMachineName();
 
-            string connectionString = string.Empty;
+            var connectionString = string.Empty;
             try
             {
                 connectionString = ConnectionStringHelper.LookupConnectionString(_connectionString, ConnectionStringKey);
@@ -104,7 +105,7 @@ namespace NLog.Extensions.AzureStorage
         /// <param name="logEvent">Logging event to be written out.</param>
         protected override void Write(LogEventInfo logEvent)
         {
-            if (String.IsNullOrEmpty(logEvent.Message))
+            if (string.IsNullOrEmpty(logEvent.Message))
                 return;
 
             var tableName = RenderLogEvent(TableName, logEvent);
@@ -188,18 +189,19 @@ namespace NLog.Extensions.AzureStorage
         {
             if (ContextProperties.Count > 0)
             {
-                DynamicTableEntity entity = new DynamicTableEntity();
-                entity.PartitionKey = partitionKey;
-                entity.RowKey = string.Concat((DateTime.MaxValue.Ticks - logEvent.TimeStamp.Ticks).ToString("d19"), "__", Guid.NewGuid().ToString());
-                entity.Properties.Add("LogTimeStamp", new EntityProperty(logEvent.TimeStamp.ToUniversalTime()));
-                for (int i = 0; i < ContextProperties.Count; ++i)
+                var entity = new DynamicTableEntity
                 {
-                    var contextproperty = ContextProperties[i];
-                    if (string.IsNullOrEmpty(contextproperty.Name))
+                    PartitionKey = partitionKey,
+                    RowKey = string.Concat((DateTime.MaxValue.Ticks - logEvent.TimeStamp.Ticks).ToString("d19"), "__", Guid.NewGuid().ToString())
+                };
+                entity.Properties.Add("LogTimeStamp", new EntityProperty(logEvent.TimeStamp.ToUniversalTime()));
+                foreach (var contextProperty in ContextProperties)
+                {
+                    if (string.IsNullOrEmpty(contextProperty.Name))
                         continue;
 
-                    var propertyValue = contextproperty.Layout != null ? RenderLogEvent(contextproperty.Layout, logEvent) : string.Empty;
-                    entity.Properties.Add(contextproperty.Name, new EntityProperty(propertyValue));
+                    var propertyValue = contextProperty.Layout != null ? RenderLogEvent(contextProperty.Layout, logEvent) : string.Empty;
+                    entity.Properties.Add(contextProperty.Name, new EntityProperty(propertyValue));
                 }
                 return entity;
             }
@@ -273,7 +275,7 @@ namespace NLog.Extensions.AzureStorage
         private string CheckAndRepairTableNamingRules(string tableName)
         {
             InternalLogger.Trace("AzureTableStorageTarget(Name={0}): Requested Table Name: {1}", Name, tableName);
-            string validTableName = AzureStorageNameCache.CheckAndRepairTableNamingRules(tableName);
+            var validTableName = AzureStorageNameCache.CheckAndRepairTableNamingRules(tableName);
             if (validTableName == tableName)
             {
                 InternalLogger.Trace("AzureTableStorageTarget(Name={0}): Using Table Name: {0}", Name, validTableName);
@@ -302,7 +304,7 @@ namespace NLog.Extensions.AzureStorage
         {
             try
             {
-                string lookupValue = lookupFunc()?.Trim();
+                var lookupValue = lookupFunc()?.Trim();
                 return string.IsNullOrEmpty(lookupValue) ? null : lookupValue;
             }
             catch (Exception ex)

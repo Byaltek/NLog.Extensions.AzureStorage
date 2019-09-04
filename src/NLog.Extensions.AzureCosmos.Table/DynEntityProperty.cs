@@ -1,8 +1,7 @@
-﻿using System;
-using NLog.Config;
+﻿using NLog.Config;
 using NLog.Layouts;
 
-namespace NLog.Extensions.AzureStorage
+namespace NLog.Extensions.AzureCosmos.Table
 {
     [NLogConfigurationItem]
     public class DynEntityProperty

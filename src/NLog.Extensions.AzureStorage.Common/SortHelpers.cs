@@ -1,8 +1,8 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace NLog.Extensions.AzureStorage
+namespace NLog.Extensions.AzureStorage.Common
 {
-    internal sealed class SortHelpers
+    public sealed class SortHelpers
     {
         /// <summary>
         /// Key Selector Delegate
@@ -11,7 +11,7 @@ namespace NLog.Extensions.AzureStorage
         /// <typeparam name="TKey">The type of the key.</typeparam>
         /// <param name="value">The value.</param>
         /// <returns></returns>
-        internal delegate TKey KeySelector<TValue, TKey>(TValue value);
+        public delegate TKey KeySelector<TValue, TKey>(TValue value);
 
         /// <summary>
         /// Buckets sorts returning a dictionary of lists
@@ -21,11 +21,11 @@ namespace NLog.Extensions.AzureStorage
         /// <param name="inputs">The inputs.</param>
         /// <param name="keySelector">The key selector.</param>
         /// <returns></returns>
-        internal static Dictionary<TKey, List<TValue>> BucketSort<TValue, TKey>(IList<TValue> inputs, KeySelector<TValue, TKey> keySelector)
+        public static Dictionary<TKey, List<TValue>> BucketSort<TValue, TKey>(IList<TValue> inputs, KeySelector<TValue, TKey> keySelector)
         {
             var retVal = new Dictionary<TKey, List<TValue>>();
 
-            for (int i = 0; i < inputs.Count; ++i)
+            for (var i = 0; i < inputs.Count; ++i)
             {
                 var input = inputs[i];
                 var keyValue = keySelector(input);

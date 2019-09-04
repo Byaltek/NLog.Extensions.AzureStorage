@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
+using Microsoft.Azure.Storage;
+using Microsoft.Azure.Storage.Blob;
 using NLog.Common;
 using NLog.Config;
+using NLog.Extensions.AzureStorage.Common;
 using NLog.Layouts;
 using NLog.Targets;
 
-namespace NLog.Extensions.AzureStorage
+namespace NLog.Extensions.AzureStorage.Blob
 {
     /// <summary>
     /// Azure Blob Storage NLog Target
@@ -81,7 +82,7 @@ namespace NLog.Extensions.AzureStorage
         {
             base.InitializeTarget();
 
-            string connectionString = string.Empty;
+            var connectionString = string.Empty;
             try
             {
                 connectionString = ConnectionStringHelper.LookupConnectionString(_connectionString, ConnectionStringKey);
@@ -102,11 +103,11 @@ namespace NLog.Extensions.AzureStorage
         /// <param name="logEvent">Logging event to be written out.</param>
         protected override void Write(LogEventInfo logEvent)
         {
-            if (String.IsNullOrEmpty(logEvent.Message))
+            if (string.IsNullOrEmpty(logEvent.Message))
                 return;
 
-            string containerName = RenderLogEvent(Container, logEvent);
-            string blobName = RenderLogEvent(BlobName, logEvent);
+            var containerName = RenderLogEvent(Container, logEvent);
+            var blobName = RenderLogEvent(BlobName, logEvent);
 
             try
             {
@@ -149,8 +150,8 @@ namespace NLog.Extensions.AzureStorage
             //Iterate over all the containers being written to
             foreach (var blobBucket in blobBuckets)
             {
-                string containerName = blobBucket.Key.ContainerName;
-                string blobName = blobBucket.Key.BlobName;
+                var containerName = blobBucket.Key.ContainerName;
+                var blobName = blobBucket.Key.BlobName;
 
                 _reusableEncodingBuilder.Length = 0;
 
@@ -181,10 +182,10 @@ namespace NLog.Extensions.AzureStorage
                 }
                 finally
                 {
-                    const int maxSize = 512 * 1024;
-                    if (_reusableEncodingBuilder.Length > maxSize)
+                    const int MaxSize = 512 * 1024;
+                    if (_reusableEncodingBuilder.Length > MaxSize)
                     {
-                        _reusableEncodingBuilder.Remove(maxSize, _reusableEncodingBuilder.Length - maxSize);   // Releases all buffers
+                        _reusableEncodingBuilder.Remove(MaxSize, _reusableEncodingBuilder.Length - MaxSize);   // Releases all buffers
                     }
                 }
             }
@@ -201,9 +202,9 @@ namespace NLog.Extensions.AzureStorage
                 _appendBlob = _container.GetAppendBlobReference(blobName);
 
 #if NETSTANDARD
-                bool blobExists = _appendBlob.ExistsAsync().GetAwaiter().GetResult();
+                var blobExists = _appendBlob.ExistsAsync().GetAwaiter().GetResult();
 #else
-                bool blobExists = _appendBlob.Exists();
+                var blobExists = _appendBlob.Exists();
 #endif
                 if (!blobExists)
                 {
@@ -268,7 +269,7 @@ namespace NLog.Extensions.AzureStorage
         private byte[] GenerateLogMessageBytes(string layoutMessage, string newLine)
         {
             newLine = newLine ?? string.Empty;
-            int totalLength = layoutMessage.Length + newLine.Length;
+            var totalLength = layoutMessage.Length + newLine.Length;
             if (totalLength < _reusableEncodingBuffer.Length)
             {
                 layoutMessage.CopyTo(0, _reusableEncodingBuffer, 0, layoutMessage.Length);
@@ -286,7 +287,7 @@ namespace NLog.Extensions.AzureStorage
         /// </summary>
         private byte[] GenerateLogMessageBytes(StringBuilder layoutMessage)
         {
-            int totalLength = layoutMessage.Length;
+            var totalLength = layoutMessage.Length;
             if (totalLength < _reusableEncodingBuffer.Length)
             {
                 layoutMessage.CopyTo(0, _reusableEncodingBuffer, 0, layoutMessage.Length);
@@ -306,7 +307,7 @@ namespace NLog.Extensions.AzureStorage
         private string CheckAndRepairContainerNamingRules(string containerName)
         {
             InternalLogger.Trace("AzureBlobStorageTarget(Name={0}): Requested Container Name: {1}", Name, containerName);
-            string validContainerName = AzureStorageNameCache.CheckAndRepairContainerNamingRules(containerName);
+            var validContainerName = AzureStorageNameCache.CheckAndRepairContainerNamingRules(containerName);
             if (validContainerName == containerName.ToLowerInvariant())
             {
                 InternalLogger.Trace("AzureBlobStorageTarget(Name={0}): Using Container Name: {0}", Name, validContainerName);
@@ -337,9 +338,9 @@ namespace NLog.Extensions.AzureStorage
                 The number of path segments comprising the blob name cannot exceed 254.
                 A path segment is the string between consecutive delimiter characters (e.g., the forward slash '/') that corresponds to the name of a virtual directory.
             */
-            if (String.IsNullOrWhiteSpace(blobName) || blobName.Length > 1024)
+            if (string.IsNullOrWhiteSpace(blobName) || blobName.Length > 1024)
             {
-                var blobDefault = String.Concat("Log-", DateTime.UtcNow.ToString("yy-MM-dd"), ".log");
+                var blobDefault = string.Concat("Log-", DateTime.UtcNow.ToString("yy-MM-dd"), ".log");
                 InternalLogger.Error("AzureBlobStorageTarget: Invalid Blob Name provided: {0} | Using default: {1}", blobName, blobDefault);
                 return blobDefault;
             }

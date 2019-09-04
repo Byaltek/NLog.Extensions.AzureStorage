@@ -8,7 +8,7 @@ using Microsoft.Azure.EventHubs;
 using NLog.Common;
 using NLog.Config;
 using NLog.Extensions.AzureEventHub;
-using NLog.Extensions.AzureStorage;
+using NLog.Extensions.AzureStorage.Common;
 using NLog.Layouts;
 
 namespace NLog.Targets

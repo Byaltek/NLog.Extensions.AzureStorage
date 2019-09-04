@@ -1,13 +1,14 @@
 ﻿using System;
+using NLog.Layouts;
+
 #if !NETSTANDARD
 using System.Configuration;
 using Microsoft.Azure;
 #endif
-using NLog.Layouts;
 
-namespace NLog.Extensions.AzureStorage
+namespace NLog.Extensions.AzureStorage.Common
 {
-    static class ConnectionStringHelper
+    public static class ConnectionStringHelper
     {
         public static string LookupConnectionString(Layout connectionStringLayout, string connectionStringKey)
         {
